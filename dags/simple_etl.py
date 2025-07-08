@@ -16,7 +16,7 @@ def fetch_data():
         writer.writeheader()
         writer.writerows(data)
     s3 = boto3.client("s3")
-    s3.put_object(Bucket="your-bucket-name", Key="test.txt", Body="Hello from Airflow")
+    s3.put_object(Bucket="selina-airflow", Key="test.txt", Body="Hello from Airflow")
 
 with DAG(
     dag_id="simple_etl",
