@@ -13,7 +13,7 @@ services:
       - postgres-db-volume:/var/lib/postgresql/data
 
   airflow-webserver:
-    image: apache/airflow:2.8.1
+    build: .
     restart: always
     depends_on:
       - postgres
@@ -44,6 +44,7 @@ services:
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
+      - ~/.aws:/home/airflow/.aws
     command: airflow scheduler
 
 volumes:

@@ -4,6 +4,7 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime
 import requests
 import csv
+import boto3
 
 def fetch_data():
     url = "https://jsonplaceholder.typicode.com/posts"
@@ -14,6 +15,8 @@ def fetch_data():
         writer = csv.DictWriter(f, fieldnames=["userId", "id", "title", "body"])
         writer.writeheader()
         writer.writerows(data)
+    s3 = boto3.client("s3")
+    s3.put_object(Bucket="your-bucket-name", Key="test.txt", Body="Hello from Airflow")
 
 with DAG(
     dag_id="simple_etl",
@@ -26,3 +29,5 @@ with DAG(
         task_id="fetch_fake_data",
         python_callable=fetch_data,
     )
+
+
