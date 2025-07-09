@@ -28,7 +28,7 @@ def fetch_data():
 
         upload_to_s3(teams_df, bucket="selina-airflow", key="teams_data.csv")
     else:
-        logging.info(f"Error: {response.status_cod}")
+        logging.info(f"Error: {response.status_code}")
 
 
 def upload_to_s3(df, bucket,  key):
