@@ -20,6 +20,7 @@ def fetch_data():
     if response.status_code == 200:
         teams = response.json()
         teams_df = pd.json_normalize(teams)
+        print('get data!')
 
         upload_to_s3(teams_df, bucket="selina-airflow", key="teams_data.csv")
     else:
