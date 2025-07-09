@@ -10,7 +10,7 @@ from io import StringIO
 
 def fetch_data():
     url = "https://api.sportsdata.io/v3/mlb/scores/json/AllTeams"
-    api_key = Variables.get('mlb_api_key')
+    api_key = Variable.get('mlb_api_key')
 
     headers = {
         "Ocp-Apim-Subscription-Key": api_key
