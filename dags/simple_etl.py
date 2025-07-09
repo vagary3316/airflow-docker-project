@@ -6,6 +6,7 @@ import requests
 import boto3
 import pandas as pd
 from io import StringIO
+import logging
 
 
 def fetch_data():
@@ -16,18 +17,18 @@ def fetch_data():
         "Ocp-Apim-Subscription-Key": api_key
     }
     response = requests.get(url, headers=headers)
-    print("API Key used:", api_key)
-    print("Status code:", response.status_code)
-    print("Response:", response.text)
+    logging("API Key used:", api_key)
+    logging("Status code:", response.status_code)
+    logging("Response:", response.text)
 
     if response.status_code == 200:
         teams = response.json()
         teams_df = pd.json_normalize(teams)
-        print('get data!')
+        logging('get data!')
 
         upload_to_s3(teams_df, bucket="selina-airflow", key="teams_data.csv")
     else:
-        print("Error", response.status_code)
+        logging("Error", response.status_code)
 
 
 def upload_to_s3(df, bucket,  key):
