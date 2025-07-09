@@ -17,9 +17,9 @@ def fetch_data():
         "Ocp-Apim-Subscription-Key": api_key
     }
     response = requests.get(url, headers=headers)
-    logging.info("API Key used:", api_key)
-    logging.info("Status code:", response.status_code)
-    logging.info("Response:", response.text)
+    logging.info(f"API Key used: {api_key}")
+    logging.info(f"Status code:{response.status_code}")
+    logging.info(f"Response:{response.text}")
 
     if response.status_code == 200:
         teams = response.json()
@@ -28,7 +28,7 @@ def fetch_data():
 
         upload_to_s3(teams_df, bucket="selina-airflow", key="teams_data.csv")
     else:
-        logging.info("Error", response.status_code)
+        logging.info(f"Error: {response.status_cod}")
 
 
 def upload_to_s3(df, bucket,  key):
