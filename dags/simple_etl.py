@@ -1,6 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.models import Variables
+from airflow.models import Variable
 from datetime import datetime
 import requests
 import boto3
