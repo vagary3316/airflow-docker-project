@@ -16,6 +16,9 @@ def fetch_data():
         "Ocp-Apim-Subscription-Key": api_key
     }
     response = requests.get(url, headers=headers)
+    print("API Key used:", api_key)
+    print("Status code:", response.status_code)
+    print("Response:", response.text)
 
     if response.status_code == 200:
         teams = response.json()
