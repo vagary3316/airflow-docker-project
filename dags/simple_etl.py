@@ -7,12 +7,17 @@ import boto3
 import pandas as pd
 from io import StringIO
 import logging
+import pytz
 
 
 def fetch_data():
+    # first catching the date in Pacific timezone
+    pacific = pytz.timezone('US/Pacific')
+    now_pacific = datetime.now(pacific)
+
     url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1"
     params = {
-        "date": datetime.utcnow().strftime("%Y-%m-%d")
+        "date": now_pacific.strftime("%Y-%m-%d")
     }
 
     response = requests.get(url, params=params)
@@ -54,8 +59,9 @@ def fetch_data():
         'status_detailedState': 'status'
     }, inplace=True)
 
+
     # upload to s3
-    date_str = datetime.today().strftime('%Y-%m-%d')
+    date_str = datetime.utcnow().strftime("%Y-%m-%d")
     upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"{date_str}.csv")
 
 
