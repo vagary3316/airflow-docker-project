@@ -12,7 +12,6 @@ import logging
 def fetch_data():
     url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1"
     params = {
-        "sportId": 1,
         "date": datetime.today().strftime("%Y-%m-%d")
     }
 
