@@ -57,7 +57,7 @@ def fetch_data():
 
     # upload to s3
     date_str = datetime.today().strftime('%Y-%m-%d')
-    upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f'{date_str}.csv")
+    upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"{date_str}.csv")
 
 
 
