@@ -12,12 +12,12 @@ import logging
 def fetch_data():
     url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1"
     response = requests.get(url)
-
     data = response.json()
+
     games = data['dates'][0]['games']
-    df_sch = pd.json_normalize(games)
+    df_sch = pd.json_normalize(games, sep='_')
 
-
+    # upload
     upload_to_s3(df_sch, bucket="selina-airflow", key="schedule.csv")
 
 
