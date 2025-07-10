@@ -1,12 +1,10 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.models import Variable
 from datetime import datetime
 import requests
 import boto3
 import pandas as pd
 from io import StringIO
-import logging
 import pytz
 
 
@@ -81,7 +79,7 @@ def upload_to_s3(df, bucket,  key):
     s3.put_object(Bucket=bucket, Key=key, Body=csv_buffer.getvalue())
 
 with DAG(
-    dag_id="simple_etl",
+    dag_id="catch_games_by_date",
     start_date=datetime(2025, 7, 1),
     schedule_interval=None,
     catchup=False,
