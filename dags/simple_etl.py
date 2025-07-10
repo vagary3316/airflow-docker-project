@@ -11,7 +11,12 @@ import logging
 
 def fetch_data():
     url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1"
-    response = requests.get(url)
+    params = {
+        "sportId": 1,
+        "date": datetime.today().strftime("%Y-%m-%d")
+    }
+
+    response = requests.get(url, params=params)
     data = response.json()
 
     games = data['dates'][0]['games']
@@ -50,8 +55,9 @@ def fetch_data():
         'status_detailedState': 'status'
     }, inplace=True)
 
-    # upload
-    upload_to_s3(df_sch_clean, bucket="selina-airflow", key="schedule.csv")
+    # upload to s3
+    date_str = datetime.today().strftime('%Y-%m-%d')
+    upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f'{date_str}.csv")
 
 
 
