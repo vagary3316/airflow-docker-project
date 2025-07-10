@@ -10,25 +10,14 @@ import logging
 
 
 def fetch_data():
-    url = "https://api.sportsdata.io/v3/mlb/scores/json/AllTeams"
-    api_key = Variable.get('mlb_api_key')
+    url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1"
+    response = requests.get(url)
 
-    headers = {
-        "Ocp-Apim-Subscription-Key": api_key
-    }
-    response = requests.get(url, headers=headers)
-    logging.info(f"API Key used: {api_key}")
-    logging.info(f"Status code:{response.status_code}")
-    logging.info(f"Response:{response.text}")
+    data = response.json()
+    df_sch = pd.json_normalize(data)
 
-    if response.status_code == 200:
-        teams = response.json()
-        teams_df = pd.json_normalize(teams)
-        logging.info('get data!')
+    upload_to_s3(df_sch, bucket="selina-airflow", key="schedule.csv")
 
-        upload_to_s3(teams_df, bucket="selina-airflow", key="teams_data.csv")
-    else:
-        logging.info(f"Error: {response.status_code}")
 
 
 def upload_to_s3(df, bucket,  key):
