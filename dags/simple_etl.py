@@ -14,7 +14,9 @@ def fetch_data():
     response = requests.get(url)
 
     data = response.json()
-    df_sch = pd.json_normalize(data)
+    games = data['dates'][0]['games']
+    df_sch = pd.json_normalize(games)
+
 
     upload_to_s3(df_sch, bucket="selina-airflow", key="schedule.csv")
 
