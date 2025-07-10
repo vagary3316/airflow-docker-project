@@ -17,8 +17,41 @@ def fetch_data():
     games = data['dates'][0]['games']
     df_sch = pd.json_normalize(games, sep='_')
 
+    # filter columns
+    df_sch_clean = df_sch[[
+        'gamePk',
+        'gameDate',
+        'officialDate',
+        'gamesInSeries',
+        'seriesGameNumber',
+        'teams_home_team_id',
+        'teams_home_team_name',
+        'teams_home_score',
+        'teams_away_team_name',
+        'teams_away_score',
+        'venue_name',
+        'status_detailedState',
+        'teams_home_leagueRecord_wins',
+        'teams_away_leagueRecord_losses',
+        'teams_home_leagueRecord_pct',
+        'teams_away_leagueRecord_wins',
+        'teams_away_leagueRecord_losses',
+        'teams_home_leagueRecord_pct'
+    ]]
+
+    df_sch_clean.rename(columns={
+        'gamePk': 'game_id',
+        'gameDate': 'datetime_utc',
+        'teams_home_team_name': 'home_team',
+        'teams_home_score': 'home_score',
+        'teams_away_team_name': 'away_team',
+        'teams_away_score': 'away_score',
+        'venue_name': 'venue',
+        'status_detailedState': 'status'
+    }, inplace=True)
+
     # upload
-    upload_to_s3(df_sch, bucket="selina-airflow", key="schedule.csv")
+    upload_to_s3(df_sch_clean, bucket="selina-airflow", key="schedule.csv")
 
 
 
