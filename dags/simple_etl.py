@@ -62,7 +62,7 @@ def fetch_data():
 
     # upload to s3
     date_str = now_pacific.strftime("%Y-%m-%d")
-    upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"{date_str}.csv")
+    upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
 
 
 
