@@ -62,7 +62,16 @@ def fetch_data():
     date_str = now_pacific.strftime("%Y-%m-%d")
     upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
 
+def fetch_league_data():
+    url = 'https:''statsapi.mlb.com/api/v1/league'
+    response = requests.get(url)
+    data = response.json()
 
+    df_league = pd.json_normalize(data, sep="_")
+
+    # upload to s3
+    date_str = datetime.today().strftime("%Y-%m-%d")
+    upload_to_s3(df_league, bucket="selina-airflow", key=f"mlb/league/{date_str}.csv")
 
 def upload_to_s3(df, bucket,  key):
     """
@@ -90,4 +99,16 @@ with DAG(
         python_callable=fetch_data,
     )
 
+# Second DAG
+with DAG(
+    dag_id="catch_league_data",
+    start_date=datetime(2025, 1, 1),
+    schedule_interval=None,
+    catchup=False,
+    tags=["etl"],
+) as dag2:
+    t2 = PythonOperator(
+        task_id="fetch_mlb_league_data",
+        python_callable=fetch_league_data,
+    )
 
