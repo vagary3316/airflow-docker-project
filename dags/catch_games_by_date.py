@@ -63,7 +63,7 @@ def fetch_data():
     upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
 
 def fetch_league_data():
-    url = 'https:''statsapi.mlb.com/api/v1/league'
+    url = 'https://statsapi.mlb.com/api/v1/league'
     response = requests.get(url)
     data = response.json()
 
