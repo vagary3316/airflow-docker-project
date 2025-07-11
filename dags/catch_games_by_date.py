@@ -67,7 +67,7 @@ def fetch_league_data():
     response = requests.get(url)
     data = response.json()
 
-    df_league = pd.json_normalize(data, sep="_")
+    df_league = pd.json_normalize(data['leagues'])
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
