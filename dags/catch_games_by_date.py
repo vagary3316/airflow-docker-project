@@ -90,7 +90,7 @@ def upload_to_s3(df, bucket,  key):
 with DAG(
     dag_id="catch_games_by_date",
     start_date=datetime(2025, 7, 1),
-    schedule_interval="@daily",
+    schedule_interval="0 8 * * *",
     catchup=False,
     tags=["etl"],
 ) as dag:
