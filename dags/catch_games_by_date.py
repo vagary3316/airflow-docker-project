@@ -9,16 +9,9 @@ import pytz
 
 
 def fetch_data():
-    # first catching the date in Pacific timezone
-    pacific = pytz.timezone('US/Pacific')
-    now_pacific = datetime.now(pacific)
-
     url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1"
-    params = {
-        "date": now_pacific.strftime("%Y-%m-%d")
-    }
 
-    response = requests.get(url, params=params)
+    response = requests.get(url)
     data = response.json()
 
     games = data['dates'][0]['games']
@@ -59,7 +52,7 @@ def fetch_data():
 
 
     # upload to s3
-    date_str = now_pacific.strftime("%Y-%m-%d")
+    date_str = datetime.today().strftime("%Y-%m-%d")
     upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
 
 def fetch_league_data():
