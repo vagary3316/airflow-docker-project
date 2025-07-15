@@ -72,12 +72,12 @@ def fetch_player_data():
     data = response.json()
 
     df_league = pd.json_normalize(data['people'])
-    df_team = df_league[['currentTeam.id','currentTeam.name']].drop_duplicates()
+    df_team = df_league[['currentTeam.id','currentTeam.name']].drop_duplicates().query("`currentTeam.name` != ''")
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
     upload_to_s3(df_league, bucket="selina-airflow", key=f"mlb/player/{date_str}.csv")
-    upload_to_s3(df_team, bucket="selina-airflow", key=f"team.csv")
+    upload_to_s3(df_team, bucket="selina-airflow", key=f"mlb/team.csv")
 
 def upload_to_s3(df, bucket,  key):
     """
