@@ -72,7 +72,7 @@ def fetch_player_data():
     data = response.json()
 
     df_league = pd.json_normalize(data['people'])
-    df_team = df_league[['currentTeam.id','currentTeam.name']].drop_duplicates().query("`currentTeam.name` != ''")
+    df_team = df_league[['currentTeam.id','currentTeam.name']].drop_duplicates().notna()
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
