@@ -129,7 +129,7 @@ def fetch_player_data():
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
-    upload_to_s3(df_player, bucket="selina-airflow", key=f"mlb/player/{date_str}.csv")
+    upload_to_s3(df_player_clean, bucket="selina-airflow", key=f"mlb/player/{date_str}.csv")
     upload_to_s3(df_all_roster, bucket="selina-airflow", key=f"mlb/player/roster/{date_str}.csv")
     upload_to_s3(df_team, bucket="selina-airflow", key=f"mlb/team.csv")
 
