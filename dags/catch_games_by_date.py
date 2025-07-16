@@ -78,10 +78,30 @@ def fetch_player_data():
         (df_team['currentTeam.name'].str.strip() != '')  # drop empty strings
         ]
 
+    all_rosters = []
+    for team_id in df_team['currentTeam.id']:
+        data_roster = fetch_roster_data(team_id)  # this returns a DataFrame
+        data_roster['team_id'] = team_id  # optional: tag with team_id
+        all_rosters.append(data_roster)  # add to list
+
+    # Combine all into one DataFrame
+    df_all_roster = pd.concat(all_rosters, ignore_index=True)
+
+
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
     upload_to_s3(df_league, bucket="selina-airflow", key=f"mlb/player/{date_str}.csv")
+    upload_to_s3(df_all_roster, bucket="selina-airflow", key=f"mlb/player/roster/{date_str}.csv")
     upload_to_s3(df_team, bucket="selina-airflow", key=f"mlb/team.csv")
+
+def fetch_roster_data(teamId):
+    url = f'https://statsapi.mlb.com/api/v1/teams/{teamId}/roster'
+    response = requests.get(url)
+    data = response.json()
+
+    df_roster = pd.json_normalize(data['roster'])
+    return df_roster
+
 
 def upload_to_s3(df, bucket,  key):
     """
