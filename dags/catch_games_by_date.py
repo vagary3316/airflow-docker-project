@@ -81,11 +81,18 @@ def fetch_player_data():
     all_rosters = []
     for team_id in df_team['currentTeam.id']:
         data_roster = fetch_roster_data(team_id)  # this returns a DataFrame
-        data_roster['team_id'] = team_id  # optional: tag with team_id
+        data_roster['team_id'] = team_id
+        # optional: tag with team_id
         all_rosters.append(data_roster)  # add to list
 
     # Combine all into one DataFrame
     df_all_roster = pd.concat(all_rosters, ignore_index=True)
+
+    df_all_roster = df_all_roster.merge(
+        df_team.rename(columns={'currentTeam.id': 'team_id', 'currentTeam.name': 'team_name'}),
+        on='team_id',
+        how='left'
+    )
 
 
     # upload to s3
