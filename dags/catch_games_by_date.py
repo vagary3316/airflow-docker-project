@@ -91,6 +91,41 @@ def fetch_player_data():
     # Merge team name for player data
     df_player = df_player.merge(df_team, left_on='currentTeam.id', right_on='currentTeam.id')
 
+    # filter columns
+    df_player_clean = df_player[[
+        'id',
+        'fullName',
+        'link',
+        'firstName',
+        'lastName',
+        'primaryNumber',
+        'birthDate',
+        'currentAge',
+        'birthCity',
+        'birthStateProvince',
+        'birthCountry',
+        'height',
+        'weight',
+        'boxscoreName',
+        'mlbDebutDate',
+        'strikeZoneTop',
+        'strikeZoneBottom',
+        'currentTeam.id',
+        'primaryPosition.code',
+        'primaryPosition.name',
+        'primaryPosition.type',
+        'primaryPosition.abbreviation',
+        'batSide.code',
+        'batSide.description',
+        'pitchHand.code',
+        'pitchHand.description',
+        'nickName',
+        'currentTeam.name_y'
+    ]]
+
+    df_player_clean.rename(columns={
+        'currentTeam.name_y': 'Team'
+    }, inplace=True)
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
