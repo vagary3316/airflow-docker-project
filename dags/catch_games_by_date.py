@@ -71,7 +71,7 @@ def fetch_player_data():
     response = requests.get(url)
     data = response.json()
 
-    df_player= pd.json_normalize(data['people'])
+    df_player = pd.json_normalize(data['people'])
     df_team = df_player[['currentTeam.id','currentTeam.name']].drop_duplicates()
     df_team = df_team[
         df_team['currentTeam.name'].notna() &  # drop NaN
@@ -89,8 +89,7 @@ def fetch_player_data():
     df_all_roster = pd.concat(all_rosters, ignore_index=True)
 
     # Merge team name for player data
-    df_player.merge(df_team, left_on='currentTeam.id', right_on='currentTeam.id')
-
+    df_player = df_player.merge(df_team, left_on='currentTeam.id', right_on='currentTeam.id')
 
 
     # upload to s3
