@@ -71,8 +71,8 @@ def fetch_player_data():
     response = requests.get(url)
     data = response.json()
 
-    df_league = pd.json_normalize(data['people'])
-    df_team = df_league[['currentTeam.id','currentTeam.name']].drop_duplicates()
+    df_player= pd.json_normalize(data['people'])
+    df_team = df_player[['currentTeam.id','currentTeam.name']].drop_duplicates()
     df_team = df_team[
         df_team['currentTeam.name'].notna() &  # drop NaN
         (df_team['currentTeam.name'].str.strip() != '')  # drop empty strings
@@ -88,16 +88,14 @@ def fetch_player_data():
     # Combine all into one DataFrame
     df_all_roster = pd.concat(all_rosters, ignore_index=True)
 
-    df_all_roster = df_all_roster.merge(
-        df_team.rename(columns={'currentTeam.id': 'team_id', 'currentTeam.name': 'team_name'}),
-        on='team_id',
-        how='left'
-    )
+    # Merge team name for player data
+    df_player.merge(df_team, left_on='currentTeam.id', right_on='currentTeam.id')
+
 
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
-    upload_to_s3(df_league, bucket="selina-airflow", key=f"mlb/player/{date_str}.csv")
+    upload_to_s3(df_player, bucket="selina-airflow", key=f"mlb/player/{date_str}.csv")
     upload_to_s3(df_all_roster, bucket="selina-airflow", key=f"mlb/player/roster/{date_str}.csv")
     upload_to_s3(df_team, bucket="selina-airflow", key=f"mlb/team.csv")
 
