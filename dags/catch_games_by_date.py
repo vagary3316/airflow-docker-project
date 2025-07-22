@@ -10,8 +10,8 @@ from io import StringIO
 
 def fetch_data():
     end_date = datetime.utcnow().date()
-    start_date = end_date - timedelta(days=6)
-    url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1"
+    start_date = end_date - timedelta(days=14)
+    url = "https://statsapi.mlb.com/api/v1/schedule?"
 
     params = {
         "sportId": 1,
