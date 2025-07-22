@@ -5,6 +5,7 @@ import requests
 import boto3
 import pandas as pd
 from io import StringIO
+import sqlite3
 
 
 def fetch_data():
@@ -41,11 +42,11 @@ def fetch_data():
         'venue_name',
         'status_detailedState',
         'teams_home_leagueRecord_wins',
-        'teams_away_leagueRecord_losses',
+        'teams_home_leagueRecord_losses',
         'teams_home_leagueRecord_pct',
         'teams_away_leagueRecord_wins',
         'teams_away_leagueRecord_losses',
-        'teams_home_leagueRecord_pct'
+        'teams_away_leagueRecord_pct'
     ]]
 
     df_sch_clean.rename(columns={
@@ -58,6 +59,8 @@ def fetch_data():
         'venue_name': 'venue',
         'status_detailedState': 'status'
     }, inplace=True)
+
+    df_sch_clean['insert_date'] = datetime.now()
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
