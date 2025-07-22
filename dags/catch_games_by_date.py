@@ -60,7 +60,7 @@ def fetch_data():
         'status_detailedState': 'status'
     }, inplace=True)
 
-    df_sch_clean['insert_date'] = datetime.now()
+    df_sch_clean['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
@@ -73,6 +73,7 @@ def fetch_league_data():
     data = response.json()
 
     df_league = pd.json_normalize(data['leagues'])
+    df_league['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
@@ -90,6 +91,7 @@ def fetch_player_data():
         df_team['currentTeam.name'].notna() &  # drop NaN
         (df_team['currentTeam.name'].str.strip() != '')  # drop empty strings
         ]
+    df_team['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     all_rosters = []
     for team_id in df_team['currentTeam.id']:
@@ -100,6 +102,7 @@ def fetch_player_data():
 
     # Combine all into one DataFrame
     df_all_roster = pd.concat(all_rosters, ignore_index=True)
+    df_all_roster['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Merge team name for player data
     df_player = df_player.merge(df_team, left_on='currentTeam.id', right_on='currentTeam.id')
@@ -139,6 +142,7 @@ def fetch_player_data():
     df_player_clean.rename(columns={
         'currentTeam.name_y': 'Team'
     }, inplace=True)
+    df_player_clean['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
