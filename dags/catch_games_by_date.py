@@ -7,7 +7,6 @@ import pandas as pd
 from io import StringIO
 
 
-
 def fetch_data():
     end_date = datetime.utcnow().date()
     start_date = end_date - timedelta(days=14)
@@ -18,11 +17,13 @@ def fetch_data():
         "startDate": start_date.strftime("%Y-%m-%d"),
         "endDate": end_date.strftime("%Y-%m-%d")
     }
-
-    response = requests.get(url)
+    response = requests.get(url, params=params)
     data = response.json()
 
-    games = data['dates'][0]['games']
+    games = []
+    for date_entry in data.get('dates', []):
+        games.extend(date_entry.get('games', []))
+
     df_sch = pd.json_normalize(games, sep='_')
 
     # filter columns
@@ -58,10 +59,10 @@ def fetch_data():
         'status_detailedState': 'status'
     }, inplace=True)
 
-
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
     upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
+
 
 def fetch_league_data():
     url = 'https://statsapi.mlb.com/api/v1/league'
@@ -74,13 +75,14 @@ def fetch_league_data():
     date_str = datetime.today().strftime("%Y-%m-%d")
     upload_to_s3(df_league, bucket="selina-airflow", key=f"mlb/league/{date_str}.csv")
 
+
 def fetch_player_data():
     url = 'https://statsapi.mlb.com/api/v1/sports/1/players'
     response = requests.get(url)
     data = response.json()
 
     df_player = pd.json_normalize(data['people'])
-    df_team = df_player[['currentTeam.id','currentTeam.name']].drop_duplicates()
+    df_team = df_player[['currentTeam.id', 'currentTeam.name']].drop_duplicates()
     df_team = df_team[
         df_team['currentTeam.name'].notna() &  # drop NaN
         (df_team['currentTeam.name'].str.strip() != '')  # drop empty strings
@@ -141,6 +143,7 @@ def fetch_player_data():
     upload_to_s3(df_all_roster, bucket="selina-airflow", key=f"mlb/player/roster/{date_str}.csv")
     upload_to_s3(df_team, bucket="selina-airflow", key=f"mlb/team.csv")
 
+
 def fetch_roster_data(teamId):
     url = f'https://statsapi.mlb.com/api/v1/teams/{teamId}/roster'
     response = requests.get(url)
@@ -150,7 +153,7 @@ def fetch_roster_data(teamId):
     return df_roster
 
 
-def upload_to_s3(df, bucket,  key):
+def upload_to_s3(df, bucket, key):
     """
     Upload a df as csv to S3
     :param df: The df wanna upload
@@ -164,12 +167,13 @@ def upload_to_s3(df, bucket,  key):
 
     s3.put_object(Bucket=bucket, Key=key, Body=csv_buffer.getvalue())
 
+
 with DAG(
-    dag_id="catch_games_by_date",
-    start_date=datetime(2025, 7, 1),
-    schedule_interval="0 8 * * *",
-    catchup=False,
-    tags=["etl"],
+        dag_id="catch_games_by_date",
+        start_date=datetime(2025, 7, 1),
+        schedule_interval="0 8 * * *",
+        catchup=False,
+        tags=["etl"],
 ) as dag:
     t1 = PythonOperator(
         task_id="fetch_mlb_data",
@@ -178,11 +182,11 @@ with DAG(
 
 # Second DAG
 with DAG(
-    dag_id="catch_league_data",
-    start_date=datetime(2025, 1, 1),
-    schedule_interval=None,
-    catchup=False,
-    tags=["etl"],
+        dag_id="catch_league_data",
+        start_date=datetime(2025, 1, 1),
+        schedule_interval=None,
+        catchup=False,
+        tags=["etl"],
 ) as dag2:
     t2 = PythonOperator(
         task_id="fetch_mlb_league_data",
@@ -191,14 +195,13 @@ with DAG(
 
 # Third DAG
 with DAG(
-    dag_id="catch_player_data",
-    start_date=datetime(2025, 1, 1),
-    schedule_interval=None,
-    catchup=False,
-    tags=["etl"],
+        dag_id="catch_player_data",
+        start_date=datetime(2025, 1, 1),
+        schedule_interval=None,
+        catchup=False,
+        tags=["etl"],
 ) as dag3:
     t3 = PythonOperator(
         task_id="fetch_mlb_player_data",
         python_callable=fetch_player_data,
     )
-
