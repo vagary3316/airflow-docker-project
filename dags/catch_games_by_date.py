@@ -62,6 +62,11 @@ def fetch_data():
 
     df_sch_clean['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    # store to sqlite
+    conn = sqlite3.connect("mlb_data.db")
+    df_sch_clean.to_sql("mlb_schedule", conn, if_exists="append", index=False)
+    conn.close()
+
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
     upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
