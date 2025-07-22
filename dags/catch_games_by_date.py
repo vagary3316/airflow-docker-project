@@ -1,6 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 import boto3
 import pandas as pd
@@ -9,7 +9,15 @@ from io import StringIO
 
 
 def fetch_data():
+    end_date = datetime.utcnow().date()
+    start_date = end_date - timedelta(days=6)
     url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1"
+
+    params = {
+        "sportId": 1,
+        "startDate": start_date.strftime("%Y-%m-%d"),
+        "endDate": end_date.strftime("%Y-%m-%d")
+    }
 
     response = requests.get(url)
     data = response.json()
