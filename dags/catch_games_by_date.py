@@ -62,16 +62,19 @@ def fetch_data():
 
     df_sch_clean['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    # upload to s3
+    date_str = datetime.today().strftime("%Y-%m-%d")
+    upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
+
     # store to sqlite
     conn = sqlite3.connect("mlb_data.db")
     df_sch_clean.to_sql("mlb_schedule", conn, if_exists="append", index=False)
     conn.close()
 
-    # upload to s3
-    date_str = datetime.today().strftime("%Y-%m-%d")
-    upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
+    # drop duplicates and check
+    drop_duplicates_data('mlb_schedule')
+    check_data('mlb_schedule')
 
-    check_data("mlb_schedule")
 
 
 def fetch_league_data():
@@ -195,6 +198,26 @@ def check_data(table):
     for row in tables:
         print(row)
 
+    conn.close()
+
+def drop_duplicates_data(table):
+    # check table in sqlite
+    conn = sqlite3.connect("mlb_data.db")
+    cursor = conn.cursor()
+
+    if table == 'mlb_schedule':
+        delete_query = """
+        DELETE FROM mlb_schedule
+        WHERE rowid NOT IN (
+        SELECT MAX(rowid)
+        FROM mlb_schedule
+        GROUP BY game_id, datetime_utc
+        );
+        """
+
+    cursor.execute(delete_query)
+    conn.commit()
+    print("drop duplicates")
     conn.close()
 
 
