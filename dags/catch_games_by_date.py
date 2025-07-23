@@ -191,7 +191,7 @@ def check_data(table):
     cursor = conn.cursor()
 
     # Show all table names
-    cursor.execute(f"SELECT * FROM {table};")
+    cursor.execute(f"SELECT game_id, datetime_utc, count(*) FROM {table} GROUP BY game_id, datetime_utc;")
     tables = cursor.fetchall()
 
     print("Tables in database:")
