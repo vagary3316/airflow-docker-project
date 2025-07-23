@@ -71,6 +71,8 @@ def fetch_data():
     date_str = datetime.today().strftime("%Y-%m-%d")
     upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
 
+    check_data("mlb_schedule")
+
 
 def fetch_league_data():
     url = 'https://statsapi.mlb.com/api/v1/league'
@@ -178,6 +180,22 @@ def upload_to_s3(df, bucket, key):
     df.to_csv(csv_buffer, index=False)
 
     s3.put_object(Bucket=bucket, Key=key, Body=csv_buffer.getvalue())
+
+
+def check_data(table):
+    # check table in sqlite
+    conn = sqlite3.connect("mlb_data.db")
+    cursor = conn.cursor()
+
+    # Show all table names
+    cursor.execute(f"SELECT * FROM {table};")
+    tables = cursor.fetchall()
+
+    print("Tables in database:")
+    for row in tables:
+        print(row)
+
+    conn.close()
 
 
 with DAG(
