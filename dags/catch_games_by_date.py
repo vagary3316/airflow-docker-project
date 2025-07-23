@@ -201,23 +201,30 @@ def check_data(table):
     conn.close()
 
 def drop_duplicates_data(table):
-    # check table in sqlite
     conn = sqlite3.connect("mlb_data.db")
     cursor = conn.cursor()
 
     if table == 'mlb_schedule':
         delete_query = """
+        WITH ranked AS (
+            SELECT 
+                rowid,
+                ROW_NUMBER() OVER (
+                    PARTITION BY game_id, datetime_utc
+                    ORDER BY insert_date DESC, rowid DESC
+                ) as rn
+            FROM mlb_schedule
+        )
         DELETE FROM mlb_schedule
-        WHERE rowid NOT IN (
-        SELECT MAX(rowid)
-        FROM mlb_schedule
-        GROUP BY game_id, datetime_utc
+        WHERE rowid IN (
+            SELECT rowid FROM ranked WHERE rn > 1
         );
         """
 
-    cursor.execute(delete_query)
-    conn.commit()
-    print("drop duplicates")
+        cursor.executescript(delete_query)
+        conn.commit()
+        print("Duplicates dropped from mlb_schedule")
+
     conn.close()
 
 
