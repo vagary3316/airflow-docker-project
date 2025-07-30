@@ -1,3 +1,4 @@
+import json
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
@@ -6,6 +7,7 @@ import boto3
 import pandas as pd
 from io import StringIO
 import sqlite3
+from airflow.hooks.base import BaseHook
 
 
 def fetch_data():
@@ -66,15 +68,14 @@ def fetch_data():
     date_str = datetime.today().strftime("%Y-%m-%d")
     upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
 
-    # store to sqlite
-    conn = sqlite3.connect("mlb_data.db")
+    # store to rds
+    conn = BaseHook.get_connection("mysql_rds")
     df_sch_clean.to_sql("mlb_schedule", conn, if_exists="append", index=False)
     conn.close()
 
     # drop duplicates and check
     drop_duplicates_data('mlb_schedule')
     check_data('mlb_schedule')
-
 
 
 def fetch_league_data():
@@ -88,6 +89,11 @@ def fetch_league_data():
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
     upload_to_s3(df_league, bucket="selina-airflow", key=f"mlb/league/{date_str}.csv")
+
+    # store to rds
+    conn = BaseHook.get_connection("mysql_rds")
+    df_league.to_sql("league", conn, if_exists="replace", index=False)
+    conn.close()
 
 
 def fetch_player_data():
@@ -161,6 +167,44 @@ def fetch_player_data():
     upload_to_s3(df_team, bucket="selina-airflow", key=f"mlb/team.csv")
 
 
+def catch_gprob_from_id():
+    conn = BaseHook.get_connection("mysql_rds")
+    cursor = conn.cursor()
+
+    # Show all table names
+    cursor.execute("""SELECT game_id, datetime_utc, officialDate, teams_home_team_id, teams_away_team_id, status
+        FROM mlb_schedule
+        WHERE DATE(officialDate) >= DATE('now', '-2 days')
+        AND status = 'Final';
+        """)
+    df_game_id = pd.DataFrame(cursor.fetchall())
+    df_game_id = df_game_id.rename(columns={0: "game_id", 1: "datetime_utc",
+                                            2: "officialDate", 3: "home_team_id",
+                                            4: "away_team_id", 5: "status"})
+    all_teams_prob = []
+    for id in df_game_id['game_id']:
+        df_prob_team = fetch_winprobability_data(id)
+        all_teams_prob.append(df_prob_team)
+    # Combine all into one DataFrame
+    df_all_teams_prob = pd.concat(all_teams_prob, ignore_index=True)
+    df_all_teams_prob['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    df_sample = sanitize_dataframe(df_all_teams_prob)
+    df_sample = df_sample.astype(str)
+
+    # store to rds
+    upload_to_rds(df_sample, 'all_teams_prob')
+
+
+def fetch_winprobability_data(game_id):
+    url = f'https://statsapi.mlb.com/api/v1/game/{game_id}/winProbability'
+    response = requests.get(url)
+    data = response.json()
+
+    df_prob = pd.json_normalize(data['result'])
+    return df_prob
+
+
 def fetch_roster_data(teamId):
     url = f'https://statsapi.mlb.com/api/v1/teams/{teamId}/roster'
     response = requests.get(url)
@@ -185,9 +229,15 @@ def upload_to_s3(df, bucket, key):
     s3.put_object(Bucket=bucket, Key=key, Body=csv_buffer.getvalue())
 
 
+def sanitize_dataframe(df):
+    for col in df.columns:
+        df[col] = df[col].apply(lambda x: json.dumps(x) if isinstance(x, (list, dict)) else x)
+    return df
+
+
 def check_data(table):
     # check table in sqlite
-    conn = sqlite3.connect("mlb_data.db")
+    conn = BaseHook.get_connection("mysql_rds")
     cursor = conn.cursor()
 
     # Show all table names
@@ -200,8 +250,15 @@ def check_data(table):
 
     conn.close()
 
+
+def upload_to_rds(df_to_db, table_name):
+    conn = BaseHook.get_connection("mysql_rds")
+    df_to_db.to_sql(table_name, conn, if_exists="append", index=False)
+    conn.close()
+
+
 def drop_duplicates_data(table):
-    conn = sqlite3.connect("mlb_data.db")
+    conn = BaseHook.get_connection("mysql_rds")
     cursor = conn.cursor()
 
     if table == 'mlb_schedule':
@@ -264,4 +321,17 @@ with DAG(
     t3 = PythonOperator(
         task_id="fetch_mlb_player_data",
         python_callable=fetch_player_data,
+    )
+
+# Fourth DAG
+with DAG(
+        dag_id="catch_probability_data",
+        start_date=datetime(2025, 7, 1),
+        schedule_interval=None,
+        catchup=False,
+        tags=["etl"],
+) as dag4:
+    t4 = PythonOperator(
+        task_id="fetch_win_probability_data",
+        python_callable=catch_gprob_from_id,
     )
