@@ -168,15 +168,17 @@ def fetch_player_data():
 
 def catch_gprob_from_id():
     conn = BaseHook.get_connection("mysql_rds")
-    cursor = conn.cursor()
-
-    # Show all table names
-    cursor.execute("""SELECT game_id, datetime_utc, officialDate, teams_home_team_id, teams_away_team_id, status
-        FROM mlb_schedule
-        WHERE DATE(officialDate) >= DATE('now', '-2 days')
-        AND status = 'Final';
-        """)
-    df_game_id = pd.DataFrame(cursor.fetchall())
+    engine = create_engine(
+        f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
+    )
+    query = """
+    SELECT game_id, datetime_utc, officialDate, teams_home_team_id, teams_away_team_id, status
+    FROM mlb_schedule
+    WHERE DATE(officialDate) >= DATE('now', '-2 days')
+    AND status = 'Final';
+    """
+    # Use read_sql to get a DataFrame directly
+    df_game_id = pd.read_sql(text(query), con=engine)
     df_game_id = df_game_id.rename(columns={0: "game_id", 1: "datetime_utc",
                                             2: "officialDate", 3: "home_team_id",
                                             4: "away_team_id", 5: "status"})
