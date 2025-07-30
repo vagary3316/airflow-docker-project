@@ -6,8 +6,8 @@ import requests
 import boto3
 import pandas as pd
 from io import StringIO
-import sqlite3
 from airflow.hooks.base import BaseHook
+from sqlalchemy import create_engine
 
 
 def fetch_data():
@@ -69,9 +69,7 @@ def fetch_data():
     upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
 
     # store to rds
-    conn = BaseHook.get_connection("mysql_rds")
-    df_sch_clean.to_sql("mlb_schedule", conn, if_exists="append", index=False)
-    conn.close()
+    upload_to_rds(df_sch_clean, 'mlb_schedule')
 
     # drop duplicates and check
     drop_duplicates_data('mlb_schedule')
@@ -92,7 +90,9 @@ def fetch_league_data():
 
     # store to rds
     conn = BaseHook.get_connection("mysql_rds")
-    df_league.to_sql("league", conn, if_exists="replace", index=False)
+    uri = f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
+    engine = create_engine(uri)
+    df_league.to_sql("league", engine, if_exists="replace", index=False)
     conn.close()
 
 
@@ -238,22 +238,26 @@ def sanitize_dataframe(df):
 def check_data(table):
     # check table in sqlite
     conn = BaseHook.get_connection("mysql_rds")
-    cursor = conn.cursor()
+    uri = f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
+    engine = create_engine(uri)
 
-    # Show all table names
-    cursor.execute(f"SELECT game_id, datetime_utc, count(*) FROM {table} GROUP BY game_id, datetime_utc;")
-    tables = cursor.fetchall()
-
-    print("Tables in database:")
-    for row in tables:
-        print(row)
+    with engine.connect() as connection:
+        result = connection.execute(f"""
+            SELECT game_id, datetime_utc, COUNT(*) 
+            FROM {table} 
+            GROUP BY game_id, datetime_utc;
+        """)
+        rows = result.fetchall()
 
     conn.close()
 
 
 def upload_to_rds(df_to_db, table_name):
     conn = BaseHook.get_connection("mysql_rds")
-    df_to_db.to_sql(table_name, conn, if_exists="append", index=False)
+    engine = create_engine(
+        f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
+    )
+    df_to_db.to_sql(table_name, engine, if_exists="append", index=False)
     conn.close()
 
 
