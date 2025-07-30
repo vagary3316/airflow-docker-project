@@ -8,7 +8,6 @@ import pandas as pd
 from io import StringIO
 from airflow.hooks.base import BaseHook
 from sqlalchemy import create_engine
-import pymysql
 
 
 def fetch_data():
