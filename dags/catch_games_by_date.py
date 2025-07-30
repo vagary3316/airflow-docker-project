@@ -174,7 +174,7 @@ def catch_gprob_from_id():
     query = """
     SELECT game_id, datetime_utc, officialDate, teams_home_team_id, teams_away_team_id, status
     FROM mlb_schedule
-    WHERE DATE(officialDate) >= DATE('now', '-2 days')
+    WHERE DATE(officialDate) >= DATE_SUB(CURDATE(), INTERVAL 2 DAY)
     AND status = 'Final';
     """
     # Use read_sql to get a DataFrame directly
