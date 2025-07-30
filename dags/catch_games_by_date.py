@@ -39,6 +39,7 @@ def fetch_data():
         'teams_home_team_id',
         'teams_home_team_name',
         'teams_home_score',
+        'teams_away_team_id',
         'teams_away_team_name',
         'teams_away_score',
         'venue_name',
@@ -182,8 +183,12 @@ def catch_gprob_from_id():
                                             2: "officialDate", 3: "home_team_id",
                                             4: "away_team_id", 5: "status"})
     all_teams_prob = []
-    for id in df_game_id['game_id']:
-        df_prob_team = fetch_winprobability_data(id)
+    for row in df_game_id.itertuples(index=False):
+        game_id = row.game_id
+        home_id = row.teams_home_team_id
+        away_id = row.teams_away_team_id
+
+        df_prob_team = fetch_winprobability_data(game_id, home_id, away_id)
         all_teams_prob.append(df_prob_team)
     # Combine all into one DataFrame
     df_all_teams_prob = pd.concat(all_teams_prob, ignore_index=True)
@@ -196,12 +201,15 @@ def catch_gprob_from_id():
     upload_to_rds(df_sample, 'all_teams_prob')
 
 
-def fetch_winprobability_data(game_id):
+def fetch_winprobability_data(game_id, home_id, away_id):
     url = f'https://statsapi.mlb.com/api/v1/game/{game_id}/winProbability'
     response = requests.get(url)
     data = response.json()
 
     df_prob = pd.json_normalize(data)
+    df_prob['game_id'] = game_id
+    df_prob['home_team_id'] = home_id
+    df_prob['away_team_id'] = away_id
     return df_prob
 
 
@@ -272,7 +280,6 @@ def drop_duplicates_data(operation):
                 WHERE id NOT IN (SELECT id FROM (SELECT MAX(id) as id FROM mlb_schedule GROUP BY game_id, datetime_utc) as sub);
                 """))
         print("Duplicates dropped from mlb_schedule")
-
 
 
 with DAG(
