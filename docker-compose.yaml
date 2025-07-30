@@ -34,7 +34,7 @@ services:
       "
 
   airflow-scheduler:
-    image: apache/airflow:2.8.1
+    build: .
     restart: always
     depends_on:
       - postgres
