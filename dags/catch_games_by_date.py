@@ -257,32 +257,21 @@ def upload_to_rds(df_to_db, table_name):
     df_to_db.to_sql(table_name, engine, if_exists="append", index=False)
 
 
-def drop_duplicates_data(table):
+def drop_duplicates_data(operation):
     conn = BaseHook.get_connection("mysql_rds")
     engine = create_engine(
         f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
     )
 
-    if table == 'mlb_schedule':
-        with engine.connect() as connection:
-            connection.execute(text("""
-        WITH ranked AS (
-            SELECT 
-                game_id,
-                ROW_NUMBER() OVER (
-                    PARTITION BY game_id, datetime_utc
-                    ORDER BY insert_date DESC, game_id DESC
-                ) as rn
-            FROM mlb_schedule
-        )
-        DELETE FROM mlb_schedule
-        WHERE game_id IN (
-            SELECT game_id FROM ranked WHERE rn > 1
-        );
-        """)
-                               )
+    if operation == 'mlb_schedule':
+        with engine.begin() as connection:
+            connection.execute(text(
+                """
+                DELETE FROM mlb_schedule 
+                WHERE id NOT IN (SELECT id FROM (SELECT MAX(id) as id FROM mlb_schedule GROUP BY game_id, datetime_utc) as sub);
+                """))
+        print("Duplicates dropped from mlb_schedule")
 
-    print("Duplicates dropped from mlb_schedule")
 
 
 with DAG(
