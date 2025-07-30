@@ -201,7 +201,7 @@ def fetch_winprobability_data(game_id):
     response = requests.get(url)
     data = response.json()
 
-    df_prob = pd.json_normalize(data['result'])
+    df_prob = pd.json_normalize(data)
     return df_prob
 
 
