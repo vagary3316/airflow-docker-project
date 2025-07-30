@@ -7,7 +7,7 @@ import boto3
 import pandas as pd
 from io import StringIO
 from airflow.hooks.base import BaseHook
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 
 def fetch_data():
@@ -93,7 +93,6 @@ def fetch_league_data():
     uri = f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
     engine = create_engine(uri)
     df_league.to_sql("league", engine, if_exists="replace", index=False)
-
 
 
 def fetch_player_data():
@@ -250,14 +249,12 @@ def check_data(table):
         rows = result.fetchall()
 
 
-
 def upload_to_rds(df_to_db, table_name):
     conn = BaseHook.get_connection("mysql_rds")
     engine = create_engine(
         f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
     )
     df_to_db.to_sql(table_name, engine, if_exists="append", index=False)
-
 
 
 def drop_duplicates_data(table):
@@ -268,24 +265,24 @@ def drop_duplicates_data(table):
 
     if table == 'mlb_schedule':
         with engine.connect() as connection:
-            result = connection.execute("""
+            connection.execute(text("""
         WITH ranked AS (
             SELECT 
-                rowid,
+                game_id,
                 ROW_NUMBER() OVER (
                     PARTITION BY game_id, datetime_utc
-                    ORDER BY insert_date DESC, rowid DESC
+                    ORDER BY insert_date DESC, game_id DESC
                 ) as rn
             FROM mlb_schedule
         )
         DELETE FROM mlb_schedule
-        WHERE rowid IN (
-            SELECT rowid FROM ranked WHERE rn > 1
+        WHERE game_id IN (
+            SELECT game_id FROM ranked WHERE rn > 1
         );
         """)
+                               )
 
     print("Duplicates dropped from mlb_schedule")
-
 
 
 with DAG(
