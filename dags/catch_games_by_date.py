@@ -93,7 +93,7 @@ def fetch_league_data():
     uri = f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
     engine = create_engine(uri)
     df_league.to_sql("league", engine, if_exists="replace", index=False)
-    conn.close()
+
 
 
 def fetch_player_data():
@@ -249,7 +249,6 @@ def check_data(table):
         """)
         rows = result.fetchall()
 
-    conn.close()
 
 
 def upload_to_rds(df_to_db, table_name):
@@ -258,15 +257,18 @@ def upload_to_rds(df_to_db, table_name):
         f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
     )
     df_to_db.to_sql(table_name, engine, if_exists="append", index=False)
-    conn.close()
+
 
 
 def drop_duplicates_data(table):
     conn = BaseHook.get_connection("mysql_rds")
-    cursor = conn.cursor()
+    engine = create_engine(
+        f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
+    )
 
     if table == 'mlb_schedule':
-        delete_query = """
+        with engine.connect() as connection:
+            result = connection.execute("""
         WITH ranked AS (
             SELECT 
                 rowid,
@@ -280,13 +282,10 @@ def drop_duplicates_data(table):
         WHERE rowid IN (
             SELECT rowid FROM ranked WHERE rn > 1
         );
-        """
+        """)
 
-        cursor.executescript(delete_query)
-        conn.commit()
-        print("Duplicates dropped from mlb_schedule")
+    print("Duplicates dropped from mlb_schedule")
 
-    conn.close()
 
 
 with DAG(
