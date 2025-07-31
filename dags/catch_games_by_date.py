@@ -1,6 +1,7 @@
 import json
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
 import requests
 import boto3
@@ -293,6 +294,13 @@ with DAG(
         task_id="fetch_mlb_data",
         python_callable=fetch_data,
     )
+    t2 = TriggerDagRunOperator(
+        task_id="fetch_win_probability_data",
+        trigger_dag_id="process_win_probability",
+        conf={"source": "catch_games_by_date"}
+    )
+    t1 >> t2
+
 
 # Second DAG
 with DAG(
