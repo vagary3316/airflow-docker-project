@@ -296,7 +296,7 @@ with DAG(
     )
     t2 = TriggerDagRunOperator(
         task_id="fetch_win_probability_data",
-        trigger_dag_id="process_win_probability",
+        trigger_dag_id="catch_probability_data",
         conf={"source": "catch_games_by_date"}
     )
     t1 >> t2
