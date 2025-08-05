@@ -1,5 +1,5 @@
 import streamlit as st
-import mysqlclient
+
 
 ## streamlit_setting
 st.set_page_config(layout="wide",
