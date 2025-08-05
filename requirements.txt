@@ -3,3 +3,6 @@ pandas
 requests
 SQLAlchemy
 pymysql==1.1.0
+streamlit
+plotly
+numpy
