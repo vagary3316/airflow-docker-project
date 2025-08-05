@@ -8,7 +8,7 @@ st.set_page_config(layout="wide",
 st.header('Data Visualization for MLB data')
 
 # Initialize connection.
-conn = st.connection('mysql', type='sql')
+conn = st.connection("sql")
 
 # Perform query.
 test_df = conn.query('SELECT * from league;', ttl=600)
