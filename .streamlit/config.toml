@@ -1,0 +1,7 @@
+[theme]
+base="light"
+primaryColor="#BA0C2F"  # MLB red
+backgroundColor="#FFFFFF"  # White
+secondaryBackgroundColor="#F2F2F2"  # Light gray
+textColor="#002D72"  # MLB navy
+font="sans serif"
