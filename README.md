@@ -1,6 +1,8 @@
 # Apache Airflow on Docker
 
 This project sets up Apache Airflow 2.8.1 using Docker Compose with a PostgreSQL backend and LocalExecutor.
+Data comes from MLB api (https://github.com/toddrob99/MLB-StatsAPI)
+Visualization will be displayed in Streamlit public app.
 
 ## 🔧 Setup
 
