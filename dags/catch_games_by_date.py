@@ -161,6 +161,8 @@ def fetch_player_data():
     }, inplace=True)
     df_player_clean['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    upload_to_rds(df_player_clean,'player')
+
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
     upload_to_s3(df_player_clean, bucket="selina-airflow", key=f"mlb/player/{date_str}.csv")
