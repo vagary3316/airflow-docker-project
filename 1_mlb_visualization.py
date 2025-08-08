@@ -12,6 +12,6 @@ st.header('Data Visualization for MLB data')
 conn = st.connection("my_mysql", type="sql")
 
 # Perform query.
-test_df = conn.query('SELECT * from league;', ttl=600)
+test_df = conn.query('SELECT * from all_teams_prob;', ttl=600)
 
 st.dataframe(test_df)
