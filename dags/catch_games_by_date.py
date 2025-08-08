@@ -161,7 +161,9 @@ def fetch_player_data():
     }, inplace=True)
     df_player_clean['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    upload_to_rds(df_player_clean,'player')
+    # upload to rds
+    upload_to_rds(df_team, 'team_id')
+    upload_to_rds(df_player_clean, 'player')
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
@@ -302,7 +304,6 @@ with DAG(
         conf={"source": "catch_games_by_date"}
     )
     t1 >> t2
-
 
 # Second DAG
 with DAG(
