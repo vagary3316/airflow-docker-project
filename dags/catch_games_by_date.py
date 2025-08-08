@@ -71,7 +71,7 @@ def fetch_data():
     upload_to_s3(df_sch_clean, bucket="selina-airflow", key=f"mlb/schedule/{date_str}.csv")
 
     # store to rds
-    upload_to_rds(df_sch_clean, 'mlb_schedule')
+    upload_to_rds(df_sch_clean, 'mlb_schedule', False)
 
     # drop duplicates and check
     drop_duplicates_data('mlb_schedule')
@@ -162,8 +162,8 @@ def fetch_player_data():
     df_player_clean['insert_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # upload to rds
-    upload_to_rds(df_team, 'team_id')
-    upload_to_rds(df_player_clean, 'player')
+    upload_to_rds(df_team, 'team_id', True)
+    upload_to_rds(df_player_clean, 'player', False)
 
     # upload to s3
     date_str = datetime.today().strftime("%Y-%m-%d")
@@ -203,7 +203,7 @@ def catch_gprob_from_id():
     df_sample = df_sample.astype(str)
 
     # store to rds
-    upload_to_rds(df_sample, 'all_teams_prob')
+    upload_to_rds(df_sample, 'all_teams_prob', False)
 
 
 def fetch_winprobability_data(game_id, home_id, away_id):
@@ -263,12 +263,15 @@ def check_data(table):
         rows = result.fetchall()
 
 
-def upload_to_rds(df_to_db, table_name):
+def upload_to_rds(df_to_db, table_name, replace_or_not: True):
     conn = BaseHook.get_connection("mysql_rds")
     engine = create_engine(
         f"mysql+pymysql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
     )
-    df_to_db.to_sql(table_name, engine, if_exists="append", index=False)
+    if replace_or_not:
+        df_to_db.to_sql(table_name, engine, if_exists='replace', index=False)
+    else:
+        df_to_db.to_sql(table_name, engine, if_exists="append", index=False)
 
 
 def drop_duplicates_data(operation):
