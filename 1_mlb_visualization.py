@@ -1,6 +1,5 @@
 import streamlit as st
 
-
 ## streamlit_setting
 st.set_page_config(layout="wide",
                    page_title="Data Visualization for MLB data",
@@ -12,6 +11,18 @@ st.header('Data Visualization for MLB data')
 conn = st.connection("my_mysql", type="sql")
 
 # Perform query.
-test_df = conn.query('SELECT * from all_teams_prob;', ttl=600)
+test_df = conn.query('''
+SELECT officialDate,
+       datetime_utc,
+       seriesGameNumber,
+       home_team,
+       home_score,
+       away_team,
+       away_score
+from mlb_schedule
+where officialDate = (SELECT MAX(officialDate) from mlb_schedule WHERE status = 'Final')
+and status = 'Final';
+'''
+                     , ttl=600)
 
 st.dataframe(test_df)
